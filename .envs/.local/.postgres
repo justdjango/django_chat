@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=conversa_dj
+POSTGRES_USER=pYTIQDlNRYJBrDkZghCpQpWhxooMONiz
+POSTGRES_PASSWORD=1wBhgOapb83ZlFR7OVYkVyFL2Gd0BNOUhkXCSbpDu2eI45KeePJZjQLnOjHgkjF2
