@@ -11,8 +11,12 @@ class HomeConsumer(JsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.room_name = None
+        self.user = None
 
     def connect(self):
+        self.user = self.scope["user"]
+        if not self.user.is_authenticated:
+            return
         print("Connected!")
         self.room_name = "home"
         self.accept()
