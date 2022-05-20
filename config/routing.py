@@ -1,5 +1,5 @@
 from django.urls import path
 
-from conversa_dj.chats.consumers import HomeConsumer
+from conversa_dj.chats.consumers import ChatConsumer
 
-websocket_urlpatterns = [path("", HomeConsumer.as_asgi())]
+websocket_urlpatterns = [path("<conversation_name>/", ChatConsumer.as_asgi())]
