@@ -4,6 +4,7 @@ import { Chat } from "./components/Chat";
 import { Conversations } from "./components/Conversations";
 import { Login } from "./components/Login";
 import { Navbar } from "./components/Navbar";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthContextProvider } from "./contexts/AuthContext";
 
 export default function App() {
@@ -18,8 +19,22 @@ export default function App() {
             </AuthContextProvider>
           }
         >
-          <Route path="" element={<Conversations />} />
-          <Route path="chats/:conversationName" element={<Chat />} />
+          <Route
+            path=""
+            element={
+              <ProtectedRoute>
+                <Conversations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="chats/:conversationName"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
           <Route path="login" element={<Login />} />
         </Route>
       </Routes>
