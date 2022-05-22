@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ActiveConversations } from "./components/ActiveConversations";
 import { Chat } from "./components/Chat";
 import { Conversations } from "./components/Conversations";
 import { Login } from "./components/Login";
@@ -24,6 +25,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Conversations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="conversations/"
+            element={
+              <ProtectedRoute>
+                <ActiveConversations />
               </ProtectedRoute>
             }
           />
