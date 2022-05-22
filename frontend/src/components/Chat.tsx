@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -6,11 +6,15 @@ import { AuthContext } from "../contexts/AuthContext";
 import { MessageModel } from "../models/Message";
 import { Message } from "./Message";
 import { ChatLoader } from "./ChatLoader";
+import { ConversationModel } from "../models/Conversation";
 
 export function Chat() {
   const { conversationName } = useParams();
   const { user } = useContext(AuthContext);
-  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [participants, setParticipants] = useState<string[]>([]);
+  const [conversation, setConversation] = useState<ConversationModel | null>(
+    null
+  );
   const [messageHistory, setMessageHistory] = useState<MessageModel[]>([]);
   const [message, setMessage] = useState("");
   const [page, setPage] = useState(2);
@@ -32,15 +36,29 @@ export function Chat() {
       onMessage: (e) => {
         const data = JSON.parse(e.data);
         switch (data.type) {
-          case "welcome_message":
-            setWelcomeMessage(data.message);
-            break;
           case "chat_message_echo":
             setMessageHistory((prev: any) => [data.message, ...prev]);
             break;
           case "last_50_messages":
             setMessageHistory(data.messages);
             setHasMoreMessages(data.has_more);
+            break;
+          case "user_join":
+            setParticipants((pcpts: string[]) => {
+              if (!pcpts.includes(data.user)) {
+                return [...pcpts, data.user];
+              }
+              return pcpts;
+            });
+            break;
+          case "user_leave":
+            setParticipants((pcpts: string[]) => {
+              const newPcpts = pcpts.filter((x) => x !== data.user);
+              return newPcpts;
+            });
+            break;
+          case "online_user_list":
+            setParticipants(data.users);
             break;
           default:
             console.error("Unknown message type!");
@@ -95,10 +113,43 @@ export function Chat() {
     setMessage("");
   };
 
+  useEffect(() => {
+    async function fetchConversation() {
+      const apiRes = await fetch(
+        `http://127.0.0.1:8000/api/conversations/${conversationName}/`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Token ${user?.token}`,
+          },
+        }
+      );
+      if (apiRes.status === 200) {
+        const data: ConversationModel = await apiRes.json();
+        setConversation(data);
+      }
+    }
+    fetchConversation();
+  }, [conversationName, user]);
+
   return (
     <div>
       <span>The WebSocket is currently {connectionStatus}</span>
-      <p>{welcomeMessage}</p>
+      {conversation && (
+        <div className="py-6">
+          <h3 className="text-3xl font-semibold text-gray-900">
+            Chat with user: {conversation.other_user.username}
+          </h3>
+          <span className="text-sm">
+            {conversation.other_user.username} is currently
+            {participants.includes(conversation.other_user.username)
+              ? " online"
+              : " offline"}
+          </span>
+        </div>
+      )}
       <input
         name="message"
         placeholder="Message"
