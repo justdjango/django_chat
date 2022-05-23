@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { useHotkeys } from "react-hotkeys-hook";
 import { AuthContext } from "../contexts/AuthContext";
 import { MessageModel } from "../models/Message";
 import { Message } from "./Message";
@@ -19,6 +20,14 @@ export function Chat() {
   const [message, setMessage] = useState("");
   const [page, setPage] = useState(2);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [meTyping, setMeTyping] = useState(false);
+  const [typing, setTyping] = useState(false);
+
+  function updateTyping(event: { user: string; typing: boolean }) {
+    if (event.user !== user!.username) {
+      setTyping(event.typing);
+    }
+  }
 
   const { readyState, sendJsonMessage } = useWebSocket(
     user ? `ws://127.0.0.1:8000/${conversationName}/` : null,
@@ -59,6 +68,9 @@ export function Chat() {
             break;
           case "online_user_list":
             setParticipants(data.users);
+            break;
+          case "typing":
+            updateTyping(data);
             break;
           default:
             console.error("Unknown message type!");
@@ -101,17 +113,56 @@ export function Chat() {
     }
   }
 
-  function handleChangeMessage(e: any) {
-    setMessage(e.target.value);
+  const timeout = useRef<any>();
+
+  function timeoutFunction() {
+    setMeTyping(false);
+    sendJsonMessage({ type: "typing", typing: false });
   }
 
+  function onType() {
+    if (meTyping === false) {
+      setMeTyping(true);
+      sendJsonMessage({ type: "typing", typing: true });
+      timeout.current = setTimeout(timeoutFunction, 5000);
+    } else {
+      clearTimeout(timeout.current);
+      timeout.current = setTimeout(timeoutFunction, 5000);
+    }
+  }
+
+  function handleChangeMessage(e: any) {
+    setMessage(e.target.value);
+    onType();
+  }
+
+  useEffect(() => () => clearTimeout(timeout.current), []);
+
   const handleSubmit = () => {
+    if (message.length === 0) return;
+    if (message.length > 512) return;
     sendJsonMessage({
       type: "chat_message",
       message,
     });
     setMessage("");
   };
+
+  const inputReference: any = useHotkeys(
+    "enter",
+    () => {
+      clearTimeout(timeout.current);
+      timeoutFunction();
+      handleSubmit();
+    },
+    {
+      enableOnTags: ["INPUT"],
+    }
+  );
+
+  useEffect(() => {
+    (inputReference.current as HTMLElement).focus();
+  }, [inputReference]);
 
   useEffect(() => {
     async function fetchConversation() {
@@ -148,18 +199,28 @@ export function Chat() {
               ? " online"
               : " offline"}
           </span>
+          {typing && (
+            <p className="truncate text-sm text-gray-500">typing...</p>
+          )}
         </div>
       )}
-      <input
-        name="message"
-        placeholder="Message"
-        onChange={handleChangeMessage}
-        value={message}
-        className="ml-2 shadow-sm sm:text-sm border-gray-300 bg-gray-100 rounded-md"
-      />
-      <button className="ml-3 bg-gray-300 px-3 py-1" onClick={handleSubmit}>
-        Submit
-      </button>
+
+      <div className="flex w-full items-center justify-between border border-gray-200 p-3">
+        <input
+          type="text"
+          placeholder="Message"
+          className="block w-full rounded-full bg-gray-100 py-2 outline-none focus:text-gray-700"
+          name="message"
+          value={message}
+          onChange={handleChangeMessage}
+          required
+          ref={inputReference}
+          maxLength={511}
+        />
+        <button className="ml-3 bg-gray-300 px-3 py-1" onClick={handleSubmit}>
+          Submit
+        </button>
+      </div>
 
       <div
         id="scrollableDiv"
