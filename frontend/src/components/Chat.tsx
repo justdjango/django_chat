@@ -47,6 +47,9 @@ export function Chat() {
         switch (data.type) {
           case "chat_message_echo":
             setMessageHistory((prev: any) => [data.message, ...prev]);
+            sendJsonMessage({
+              type: "read_messages",
+            });
             break;
           case "last_50_messages":
             setMessageHistory(data.messages);
