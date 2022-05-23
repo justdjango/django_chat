@@ -88,6 +88,14 @@ export function Chat() {
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
+  useEffect(() => {
+    if (connectionStatus === "Open") {
+      sendJsonMessage({
+        type: "read_messages",
+      });
+    }
+  }, [connectionStatus, sendJsonMessage]);
+
   async function fetchMessages() {
     const apiRes = await fetch(
       `http://127.0.0.1:8000/api/messages/?conversation=${conversationName}&page=${page}`,
