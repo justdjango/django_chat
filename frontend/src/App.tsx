@@ -7,6 +7,7 @@ import { Login } from "./components/Login";
 import { Navbar } from "./components/Navbar";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthContextProvider } from "./contexts/AuthContext";
+import { NotificationContextProvider } from "./contexts/NotificationContext";
 
 export default function App() {
   return (
@@ -16,7 +17,9 @@ export default function App() {
           path="/"
           element={
             <AuthContextProvider>
-              <Navbar />
+              <NotificationContextProvider>
+                <Navbar />
+              </NotificationContextProvider>
             </AuthContextProvider>
           }
         >

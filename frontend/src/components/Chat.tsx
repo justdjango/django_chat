@@ -30,7 +30,7 @@ export function Chat() {
   }
 
   const { readyState, sendJsonMessage } = useWebSocket(
-    user ? `ws://127.0.0.1:8000/${conversationName}/` : null,
+    user ? `ws://127.0.0.1:8000/chats/${conversationName}/` : null,
     {
       queryParams: {
         token: user ? user.token : "",
@@ -146,13 +146,13 @@ export function Chat() {
       message,
     });
     setMessage("");
+    clearTimeout(timeout.current);
+    timeoutFunction();
   };
 
   const inputReference: any = useHotkeys(
     "enter",
     () => {
-      clearTimeout(timeout.current);
-      timeoutFunction();
       handleSubmit();
     },
     {
